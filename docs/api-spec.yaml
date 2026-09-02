@@ -1,0 +1,777 @@
+openapi: 3.1.0
+info:
+  title: Suraksha Setu
+  version: 0.1.0
+paths:
+  /:
+    get:
+      tags:
+      - Root
+      summary: Root
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/health:
+    get:
+      tags:
+      - Health
+      summary: Health Check
+      description: Returns application health status.
+      operationId: health_check_api_v1_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/auth/token:
+    post:
+      tags:
+      - Auth
+      summary: OAuth2 Password Token Flow (for Swagger UI / Form Auth)
+      description: OAuth2 password flow token endpoint. Used automatically by Swagger
+        UI's Authorize dialog.
+      operationId: login_for_access_token_api_v1_auth_token_post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_login_for_access_token_api_v1_auth_token_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/login:
+    post:
+      tags:
+      - Auth
+      summary: Authenticate Staff User (JSON API)
+      description: Authenticate a staff member (Counsellor, District/State/National
+        official, Admin) using JSON body.
+      operationId: login_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/refresh:
+    post:
+      tags:
+      - Auth
+      summary: Refresh Access Token
+      description: Issue a new short-lived access token using a valid refresh token.
+      operationId: refresh_token_api_v1_auth_refresh_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/me:
+    get:
+      tags:
+      - Auth
+      summary: Get Current Authenticated Staff User
+      description: Return the profile and role details of the currently authenticated
+        staff user.
+      operationId: get_me_api_v1_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/victims:
+    post:
+      tags:
+      - Victims & Consent
+      summary: Register/Enroll Victim Case
+      description: 'Enroll a victim/witness into the monitoring system with their
+        preferred channel and language. Authorized: District Official, Admin, System.'
+      operationId: enroll_victim_api_v1_victims_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VictimCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VictimResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2PasswordBearer: []
+  /api/v1/consents:
+    post:
+      tags:
+      - Victims & Consent
+      summary: Record or Update Victim Consent
+      description: Record victim consent or revocation for periodic distress monitoring.
+      operationId: record_consent_api_v1_consents_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/interactions:
+    post:
+      tags:
+      - Interactions & Check-ins
+      summary: Record Check-in Interaction (with Automatic NLP Assessment)
+      description: Record a check-in interaction response from a victim channel. Requires
+        active consent. Automatically triggers NLP sentiment analysis and generates
+        an Assessment record.
+      operationId: create_interaction_api_v1_interactions_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractionCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractionResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/interactions/{interaction_id}/assessment:
+    get:
+      tags:
+      - Interactions & Check-ins
+      summary: Get Assessment for an Interaction
+      description: Retrieve the AI assessment signals (sentiment_score, confidence,
+        etc.) computed for a specific interaction.
+      operationId: get_interaction_assessment_api_v1_interactions__interaction_id__assessment_get
+      parameters:
+      - name: interaction_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Interaction Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/cases/{case_id}/distress-history:
+    get:
+      tags:
+      - Cases & Risk Management
+      summary: Get Case Distress Score History (DDS Snapshots, Baseline & Trend)
+      description: Retrieve full Dynamic Distress Score (DDS) history for a case,
+        including baseline score, trend slope, and categorized risk band per check-in.
+      operationId: get_case_distress_history_api_v1_cases__case_id__distress_history_get
+      parameters:
+      - name: case_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Case Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseDistressHistoryResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/debug/tables:
+    get:
+      tags:
+      - Debug
+      summary: List database tables (Temporary Debug)
+      description: Lists all tables and columns currently created in the SQLite database.
+      operationId: list_tables_api_v1_debug_tables_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    AssessmentResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        interaction_id:
+          type: string
+          format: uuid
+          title: Interaction Id
+        sentiment_score:
+          type: number
+          maximum: 1.0
+          minimum: -1.0
+          title: Sentiment Score
+          description: Sentiment polarity from -1.0 (severe distress) to +1.0 (positive)
+        emotion_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Emotion Label
+          description: Classified emotion (e.g., fear, sadness, anger, hopelessness,
+            neutral)
+        voice_stress_score:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          title: Voice Stress Score
+          description: Acoustic voice stress score when audio is analyzed
+        confidence:
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Confidence
+          description: Confidence score from 0.0 to 1.0
+        processed_at:
+          type: string
+          format: date-time
+          title: Processed At
+      type: object
+      required:
+      - id
+      - interaction_id
+      - sentiment_score
+      - confidence
+      - processed_at
+      title: AssessmentResponse
+    Body_login_for_access_token_api_v1_auth_token_post:
+      properties:
+        grant_type:
+          anyOf:
+          - type: string
+            pattern: ^password$
+          - type: 'null'
+          title: Grant Type
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          format: password
+          title: Password
+        scope:
+          type: string
+          title: Scope
+          default: ''
+        client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: 'null'
+          format: password
+          title: Client Secret
+      type: object
+      required:
+      - username
+      - password
+      title: Body_login_for_access_token_api_v1_auth_token_post
+    CaseDistressHistoryResponse:
+      properties:
+        case_id:
+          type: string
+          format: uuid
+          title: Case Id
+        total_checkins:
+          type: integer
+          title: Total Checkins
+        current_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Current Score
+        current_risk_band:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Current Risk Band
+        baseline_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Baseline Score
+        trend_slope:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Trend Slope
+        history:
+          items:
+            $ref: '#/components/schemas/DistressScoreResponse'
+          type: array
+          title: History
+      type: object
+      required:
+      - case_id
+      - total_checkins
+      - history
+      title: CaseDistressHistoryResponse
+    ConsentCreate:
+      properties:
+        victim_id:
+          type: string
+          format: uuid
+          title: Victim Id
+        consented:
+          type: boolean
+          title: Consented
+          description: Whether victim consents to periodic monitoring
+        channels:
+          items:
+            type: string
+            enum:
+            - chatbot
+            - ivrs
+            - sms
+            - app
+            - web
+          type: array
+          title: Channels
+          description: Channels victim consents to
+          default:
+          - sms
+          - chatbot
+      type: object
+      required:
+      - victim_id
+      - consented
+      title: ConsentCreate
+    ConsentResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        victim_id:
+          type: string
+          format: uuid
+          title: Victim Id
+        status:
+          type: string
+          enum:
+          - active
+          - revoked
+          - pending
+          title: Status
+      type: object
+      required:
+      - id
+      - victim_id
+      - status
+      title: ConsentResponse
+    DistressScoreResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        case_id:
+          type: string
+          format: uuid
+          title: Case Id
+        assessment_id:
+          type: string
+          format: uuid
+          title: Assessment Id
+        current_score:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Current Score
+          description: DDS score from 0.0 to 100.0
+        baseline_score:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Baseline Score
+          description: Initial baseline DDS score
+        trend_slope:
+          type: number
+          title: Trend Slope
+          description: Calculated trend slope across recent check-ins
+        risk_band:
+          type: string
+          enum:
+          - low
+          - moderate
+          - high
+          - critical
+          title: Risk Band
+          description: Categorized risk band (low, moderate, high, critical)
+        computed_at:
+          type: string
+          format: date-time
+          title: Computed At
+      type: object
+      required:
+      - id
+      - case_id
+      - assessment_id
+      - current_score
+      - baseline_score
+      - trend_slope
+      - risk_band
+      - computed_at
+      title: DistressScoreResponse
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    HealthResponse:
+      properties:
+        status:
+          type: string
+          title: Status
+          description: Application health status
+          default: ok
+      type: object
+      title: HealthResponse
+    InteractionCreate:
+      properties:
+        case_id:
+          type: string
+          format: uuid
+          title: Case Id
+          description: ID of the monitored case
+        channel:
+          type: string
+          enum:
+          - chatbot
+          - ivrs
+          - sms
+          - app
+          - web
+          title: Channel
+          description: Communication channel used for the check-in
+          default: chatbot
+        response_text:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Response Text
+          description: Check-in response text or transcribed audio
+        response_latency_sec:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Response Latency Sec
+          description: Response latency in seconds
+        was_skipped:
+          type: boolean
+          title: Was Skipped
+          description: Whether check-in was skipped by victim
+          default: false
+      type: object
+      required:
+      - case_id
+      title: InteractionCreate
+    InteractionResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        occurred_at:
+          type: string
+          format: date-time
+          title: Occurred At
+      type: object
+      required:
+      - id
+      - occurred_at
+      title: InteractionResponse
+    LoginRequest:
+      properties:
+        email:
+          type: string
+          title: Email
+          description: Staff user email address
+        password:
+          type: string
+          minLength: 6
+          title: Password
+          description: Staff user password
+      type: object
+      required:
+      - email
+      - password
+      title: LoginRequest
+    LoginResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        refresh_token:
+          type: string
+          title: Refresh Token
+        role:
+          type: string
+          title: Role
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+      type: object
+      required:
+      - access_token
+      - refresh_token
+      - role
+      title: LoginResponse
+    RefreshTokenRequest:
+      properties:
+        refresh_token:
+          type: string
+          title: Refresh Token
+      type: object
+      required:
+      - refresh_token
+      title: RefreshTokenRequest
+    RefreshTokenResponse:
+      properties:
+        access_token:
+          type: string
+          title: Access Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+      type: object
+      required:
+      - access_token
+      title: RefreshTokenResponse
+    UserRead:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        full_name:
+          type: string
+          title: Full Name
+        email:
+          type: string
+          title: Email
+        role:
+          type: string
+          title: Role
+        authority_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Authority Id
+        auth_provider:
+          type: string
+          title: Auth Provider
+          default: local
+        is_active:
+          type: boolean
+          title: Is Active
+        last_login:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Last Login
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+      type: object
+      required:
+      - id
+      - full_name
+      - email
+      - role
+      - is_active
+      - created_at
+      title: UserRead
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    VictimCreate:
+      properties:
+        case_ref_id:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Case Ref Id
+          description: Legal case reference identifier
+        preferred_language:
+          type: string
+          maxLength: 10
+          title: Preferred Language
+          description: Preferred language code (e.g. hi, en)
+          default: hi
+        preferred_channel:
+          type: string
+          enum:
+          - chatbot
+          - ivrs
+          - sms
+          - app
+          - web
+          title: Preferred Channel
+          description: Preferred contact channel
+          default: sms
+      type: object
+      required:
+      - case_ref_id
+      title: VictimCreate
+    VictimResponse:
+      properties:
+        id:
+          type: string
+          format: uuid
+          title: Id
+        case_ref_id:
+          type: string
+          title: Case Ref Id
+        enrolled_at:
+          type: string
+          format: date-time
+          title: Enrolled At
+      type: object
+      required:
+      - id
+      - case_ref_id
+      - enrolled_at
+      title: VictimResponse
+  securitySchemes:
+    OAuth2PasswordBearer:
+      type: oauth2
+      description: OAuth2 Password Bearer flow. Enter your email in 'username' and
+        password in 'password'.
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: /api/v1/auth/token
