@@ -1,0 +1,44 @@
+# Backend .gitignore
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+myndsync.db
+
+# Ensure Alembic migration versions are tracked
+!alembic/versions/*.py
+
+# Testing & Cache
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
